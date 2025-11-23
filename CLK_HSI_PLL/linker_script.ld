@@ -1,27 +1,34 @@
-/*-----------------------------------------------------------------------------
- * Entry Point: Reset_Handler
- * This symbol must exist in the startup file.
- *----------------------------------------------------------------------------*/
+/**
+* @file    stm32f446re.ld
+* @brief   Linker script for STM32F446RE (512KB Flash, 128KB RAM)
+* @details Defines memory regions, section placement, stack, heap, and
+*          startup vector table. Used by GNU linker for project build.
+*/ 
+
+/**
+ * @brief Entry point symbol for reset handler.
+ * @details This symbol must exist in the startup file.
+ */
 ENTRY(Reset_Handler)
 
-/*-----------------------------------------------------------------------------
- * Memory Regions (From STM32F446RE Datasheet)
- *----------------------------------------------------------------------------*/
+/**
+ * @brief Memory regions as per STM32F446RE datasheet.
+ */
 MEMORY
 {
   FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 512K   /* Program memory */
   RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 128K   /* SRAM1 + SRAM2 */
 }
 
-/*-----------------------------------------------------------------------------
- * Section Placement
- * Defines how each section is mapped to memory.
- *----------------------------------------------------------------------------*/
+/**
+ * @brief Section placement defines how each section is mapped to memory.
+ */
 SECTIONS
 {
-  /*---------------------------------------------------------------------------
-   * 1. Vector Table and Code (.isr_vector + .text)
-   *---------------------------------------------------------------------------*/
+  /**
+   * @section Code_Section
+   * @brief Vector Table and Code (.isr_vector + .text)
+   */
   .text :
   {
     KEEP(*(.isr_vector))      /* Interrupt Vector Table (Reset, ISRs) */
@@ -34,10 +41,11 @@ SECTIONS
     _etext = .;               /* Marks end of code section */
   } > FLASH
 
-  /*---------------------------------------------------------------------------
-   * 2. Initialized Data (.data)
-   *   - Data copied from Flash (_sidata) to RAM (_sdata → _edata)
-   *---------------------------------------------------------------------------*/
+  /**
+   * @section Data_Section
+   * @brief Initialized Data (.data)
+   * @details Data copied from Flash (_sidata) to RAM (_sdata → _edata)
+   */
   .data : AT(_etext)
   {
     _sidata = LOADADDR(.data); /* Address in Flash where .data is stored */
@@ -49,10 +57,11 @@ SECTIONS
     _edata = .;                /* End of .data in RAM */
   } > RAM
 
-  /*---------------------------------------------------------------------------
-   * 3. Uninitialized Data (.bss)
-   *   - Zero-initialized at runtime (_sbss → _ebss)
-   *---------------------------------------------------------------------------*/
+  /**
+   * @section BSS_Section
+   * @brief Uninitialized Data (.bss)
+   * @details Zero-initialized at runtime (_sbss → _ebss)
+   */
   .bss (NOLOAD) :
   {
     . = ALIGN(4);
@@ -63,10 +72,11 @@ SECTIONS
     _ebss = .;                 /* End of .bss in RAM */
   } > RAM
 
-  /*---------------------------------------------------------------------------
-   * 4. Heap and Stack region
-   *   - Reserve space for dynamic memory and stack.
-   *---------------------------------------------------------------------------*/
+  /**
+   * @section Heap_Stack
+   * @brief Heap and Stack region
+   * @details Reserve space for dynamic memory (heap) and stack.
+   */
   ._user_heap_stack (NOLOAD):
   {
     . = ALIGN(8);
@@ -80,9 +90,10 @@ SECTIONS
     _estack = ORIGIN(RAM) + LENGTH(RAM); /* Top of stack */
   } > RAM
 
-  /*---------------------------------------------------------------------------
-   * 5. Discard Debug Sections (optional)
-   *---------------------------------------------------------------------------*/
+  /**
+   * @section Discard_Debug
+   * @brief Discard Debug Sections (optional)
+   */
   /DISCARD/ :
   {
     *(.comment)
@@ -90,6 +101,6 @@ SECTIONS
   }
 }
 
-/*-----------------------------------------------------------------------------
- * End of Linker Script
- *----------------------------------------------------------------------------*/
+/**
+ * @brief End of linker script
+ */
