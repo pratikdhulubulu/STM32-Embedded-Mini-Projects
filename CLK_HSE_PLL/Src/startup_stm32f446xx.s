@@ -1,12 +1,22 @@
+/**
+ * @file    startup_stm32f446xx.s
+ * @brief   STM32F446 startup file: Vector table and reset handler.
+ * @details This file contains the vector table, reset handler, default
+ *          exception and interrupt handlers for STM32F446. It also
+ *          performs .data initialization, .bss zeroing, calls SystemInit,
+ *          and then calls main().
+ */
+
 .syntax unified
 .cpu cortex-m4
 .thumb
 
-/*---------------------------------------------------------------------------
- * Section 1: Vector Table
- *   - Stored in Flash at address 0x08000000 (by linker script)
- *   - Contains the initial stack pointer and ISR entry addresses
- *---------------------------------------------------------------------------*/
+/**
+ * @section Vector_Table
+ * @brief   ARM Cortex-M4 vector table.
+ * @details Located in Flash at 0x08000000 as defined by the linker script.
+ *          Contains initial stack pointer and ISR entry addresses.
+ */
 .section .isr_vector, "a", %progbits
 .align 2
 .global __isr_vector
@@ -34,10 +44,10 @@ __isr_vector:
         .word   Default_Handler
     .endr
 
-/*---------------------------------------------------------------------------
- * Section 2: External Symbols
- *   - Defined in linker script (.ld)
- *---------------------------------------------------------------------------*/
+/**
+ * @section External_Symbols
+ * @brief   Symbols imported from linker script.
+ */
 .extern _sidata    /* Start address for .data initialization values in Flash */
 .extern _sdata     /* Start of .data in RAM */
 .extern _edata     /* End of .data in RAM */
@@ -46,17 +56,18 @@ __isr_vector:
 .extern SystemInit /* System initialization function (clock, PLL, etc.) */
 .extern main       /* Main application entry */
 
-/*---------------------------------------------------------------------------
- * Section 3: Reset Handler
- *   - Runs after reset
- *   - Initializes memory, calls SystemInit(), then main()
- *---------------------------------------------------------------------------*/
+/**
+ * @section Reset_Handler
+ * @brief   Reset handler routine.
+ * @details Initializes .data section, zeros .bss, calls SystemInit(),
+ *          then jumps to main(). Enters infinite loop if main() returns.
+ */
 .section .text.Reset_Handler, "ax", %progbits
 .global Reset_Handler
 .type Reset_Handler, %function
 
 Reset_Handler:
-    /* --- Copy .data section from Flash (_sidata) to RAM (_sdata → _edata) --- */
+    /* Copy .data section from Flash (_sidata) to RAM (_sdata → _edata) */
     ldr   r0, =_sdata
     ldr   r1, =_edata
     ldr   r2, =_sidata
@@ -67,7 +78,7 @@ data_copy:
     strlt r3, [r0], #4
     blt   data_copy
 
-    /* --- Zero initialize the .bss section (_sbss → _ebss) --- */
+    /* Zero initialize the .bss section (_sbss → _ebss) */
     ldr   r0, =_sbss
     ldr   r1, =_ebss
     movs  r2, #0
@@ -77,10 +88,10 @@ bss_clear:
     strlt r2, [r0], #4
     blt   bss_clear
 
-    /* --- Call system initialization routine --- */
+    /* Call system initialization routine */
     bl SystemInit
 
-    /* --- Call main application --- */
+    /* Call main application */
     bl    main
 
 infinite_loop:
@@ -88,10 +99,11 @@ infinite_loop:
 
 .size Reset_Handler, . - Reset_Handler
 
-/*---------------------------------------------------------------------------
- * Section 4: Default Exception & Interrupt Handlers
- *   - Weakly linked so user can override in C code
- *---------------------------------------------------------------------------*/
+/**
+ * @section Default_Handlers
+ * @brief   Default exception and interrupt handlers.
+ * @details Weakly linked handlers that can be overridden in user C code.
+ */
 .section .text.Default_Handler, "ax", %progbits
 Default_Handler:
     b Default_Handler

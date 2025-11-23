@@ -1,36 +1,57 @@
+/**
+* @file    system_stm32f44xx.c
+* @author  Pratik Dhulubulu
+* @brief   STM32F446 System Clock Configuration
+* @details Configures system clock to 70 MHz using external HSE oscillator and PLL.
+*/
+
 #include <stdint.h>
 #include "stm32f446xx.h"
 
+/**
+* @brief   Initialize system clock for STM32F446 using HSE.
+* @details Uses 8 MHz HSE crystal → PLL → 70 MHz SYSCLK.
+* @param   None
+* @retval  None
+*/
 void SystemInit(void){
   
-    RCC->CR |= RCC_CR_HSEON; // Enable HSE
-    while((RCC->CR & RCC_CR_HSERDY) == 0); // Wait for start of HSE
+    /* Starts external 8 MHz crystal and waits for HSERDY flag */
+    RCC->CR |= RCC_CR_HSEON;
+    while((RCC->CR & RCC_CR_HSERDY) == 0);
 
-    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_CSSON); // Disabled PLL,CSS
-    while(RCC->CR & RCC_CR_PLLRDY);// Wait for PLL Disable
+    /* Disable PLL and CSS before configuring PLL */
+    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_CSSON);
+    while(RCC->CR & RCC_CR_PLLRDY);
 
-    FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN |
-                 FLASH_ACR_PRFTEN | FLASH_ACR_LATENCY_3WS; // Flash accelerations
+    /* Configure Flash latency and enable caches */
+    FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_PRFTEN | FLASH_ACR_LATENCY_3WS;
 
-    uint32_t pllm = 4;   /* 2 MHz VCO input */
-    uint32_t plln = 140;  /* 280 MHz VCO output */
-    uint32_t pllp = 2;    /* => 70 MHz SYSCLK */
+    /* Configure PLL parameters */
+    uint32_t pllm = 4;
+    uint32_t plln = 140;
+    uint32_t pllp = 2;
 
+    /* Configure PLL registers */
     RCC->PLLCFGR = (pllm) |
                    (plln << 6) |
                    (((pllp/2)-1) << 16) |
-                   (1 << 22); // Configurating PLL
+                   (1 << 22);  /**< PLLSRC = HSE */
 
-    RCC->CR |= RCC_CR_PLLON; // Enable PLL
-    while((RCC->CR & RCC_CR_PLLRDY) == 0); // Wait for start PLL
+    /* Enable PLL and wait until ready */
+    RCC->CR |= RCC_CR_PLLON;
+    while((RCC->CR & RCC_CR_PLLRDY) == 0);
 
-    RCC->CFGR |= RCC_CFGR_HPRE_DIV1; // Set AHB - DIV1
-    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2; // Set APB1 - DIV2
-    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1; // Set APB2 - DIV1
+    /* Configure AHB and APB prescalers */
+    RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
 
-    RCC->CFGR &= ~(RCC_CFGR_SW); // Clear System CLK switch bits 00
-    RCC->CFGR |= RCC_CFGR_SW_PLL; // Set PLL output as System CLK
-    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL); // Wait for System CLK is switch to PLL
+    /* Switch system clock to PLL */
+    RCC->CFGR &= ~(RCC_CFGR_SW);
+    RCC->CFGR |= RCC_CFGR_SW_PLL;
+    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
 
+    /* Disable HSI */
     RCC->CR &= ~(RCC_CR_HSION);
 }
