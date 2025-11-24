@@ -1,6 +1,4 @@
-###############################################################################
 # Toolchain Setup
-###############################################################################
 CC       = arm-none-eabi-gcc
 AS       = arm-none-eabi-as
 OBJCOPY  = arm-none-eabi-objcopy
@@ -9,9 +7,7 @@ SIZE     = arm-none-eabi-size
 GDB      = arm-none-eabi-gdb
 RM       = rm -rf
 
-###############################################################################
 # Project Configuration
-###############################################################################
 TARGET    = firmware
 
 # MCU configuration (adjust per chip)
@@ -25,15 +21,11 @@ INC_DIR   = Inc
 BUILD_DIR = build
 LD_SCRIPT = linker_script.ld
 
-###############################################################################
 # Version Configuration
-###############################################################################
 # User-defined release version (change as needed)
 VERSION   = MY_RELEASE_1.0.2
 
-###############################################################################
 # Build Configuration (Debug / Release)
-###############################################################################
 ifeq ($(DEBUG),1)
 CFLAGS_OPT = -O0 -g
 BUILD_TYPE = Debug
@@ -45,25 +37,19 @@ CFLAGS_OPT = -O0 -g
 BUILD_TYPE = Default(Debug)
 endif
 
-###############################################################################
 # Build Versioning (auto date/time + version tag)
-###############################################################################
 BUILD_DATE := $(shell date +"%Y-%m-%d")
 BUILD_TIME := $(shell date +"%H:%M:%S")
 CFLAGS += -DBUILD_DATE=\"$(BUILD_DATE)\" -DBUILD_TIME=\"$(BUILD_TIME)\" -DBUILD_VERSION=\"$(VERSION)\"
 
-###############################################################################
 # Source and Include Files
-###############################################################################
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 ASMS := $(wildcard $(SRC_DIR)/*.s)
 
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS)) \
         $(patsubst $(SRC_DIR)/%.s, $(BUILD_DIR)/%.o, $(ASMS))
 
-###############################################################################
 # Compiler and Linker Flags
-###############################################################################
 CFLAGS  += -Wall $(CFLAGS_OPT) -std=gnu11
 CFLAGS  += -mcpu=$(MCU) -mthumb -mfpu=$(FPU) -mfloat-abi=$(FLOAT-ABI)
 CFLAGS  += -I$(INC_DIR)
@@ -71,9 +57,7 @@ CFLAGS  += -I$(INC_DIR)
 LDFLAGS = -T$(LD_SCRIPT) -nostartfiles
 LDFLAGS += -mcpu=$(MCU) -mthumb -mfpu=$(FPU) -mfloat-abi=$(FLOAT-ABI)
 
-###############################################################################
 # Build Targets
-###############################################################################
 .PHONY: all clean flash debug info
 
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).hex
@@ -107,9 +91,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s | $(BUILD_DIR)
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-###############################################################################
 # Output formats (BIN + HEX)
-###############################################################################
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 	@$(OBJCOPY) -O binary $< $@
 	@echo "Created binary  : $@"
@@ -118,31 +100,23 @@ $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
 	@$(OBJCOPY) -O ihex $< $@
 	@echo "Created hex     : $@"
 
-###############################################################################
 # Clean
-###############################################################################
 clean:
 	@echo "Cleaning build files..."
 	@$(RM) $(BUILD_DIR)
 	@echo "Clean done."
 
-###############################################################################
 # Flash (via OpenOCD)
-###############################################################################
 flash: all
 	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
 
-###############################################################################
 # Debug (OpenOCD + GDB)
-###############################################################################
 debug: all
 	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg &
 	sleep 2
 	$(GDB) $(BUILD_DIR)/$(TARGET).elf -ex "target extended-remote localhost:3333"
 
-###############################################################################
-# Info (for developer insight)
-###############################################################################
+# Info
 info:
 	@echo "Source files : $(SRCS)"
 	@echo "Object files : $(OBJS)"
